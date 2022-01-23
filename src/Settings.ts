@@ -1,5 +1,6 @@
 // This load the .env file
 import "dotenv/config";
+import { runInThisContext } from "vm";
 
 /**
  * Central repository for global settings. Initialize with the load() factory
@@ -37,6 +38,12 @@ export default class Settings {
 
   private loadEnvVars() {
     this.wordpressUrl = process.env.WORDPRESS_URL as string;
+    if (this.wordpressUrl.endsWith("/")) {
+      this.wordpressUrl = this.wordpressUrl.substring(
+        0,
+        this.wordpressUrl.lastIndexOf("/")
+      );
+    }
     this.microserviceUrl = process.env.MICROSERVICE_URL as string;
     this.loggedInKey = process.env.WORDPRESS_LOGGED_IN_KEY as string;
     this.loggedInSalt = process.env.WORDPRESS_LOGGED_IN_SALT as string;

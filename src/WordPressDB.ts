@@ -1,6 +1,12 @@
-import mysql from "mysql2/promise";
+import mysql, { RowDataPacket } from "mysql2/promise";
 import serialize from "wp-auth/serialize";
 import debug from "debug";
+import {
+  ContentId,
+  ContentParameters,
+  IContentMetadata,
+  IUser,
+} from "@lumieducation/h5p-server";
 
 const log = debug("wp-microservice:db");
 
@@ -126,4 +132,104 @@ export default class WordPressDB {
       return undefined;
     }
   }
+
+  public async getContentMetadata(
+    contentId: ContentId
+  ): Promise<IContentMetadata> {
+    let connection: mysql.Connection;
+    try {
+      connection = await mysql.createConnection({
+        host: this.dbHost,
+        user: this.dbUser,
+        password: this.dbPassword,
+        database: this.dbDatabase,
+      });
+    } catch (error) {
+      console.error("Error while connecting to database: ", error);
+      throw error;
+    }
+
+    const contentIdNumber = Number.parseInt(contentId);
+
+    try {
+      const [cRows] = await connection.query(
+        `SELECT c.title, 
+                c.embed_type, 
+                c.content_type, 
+                c.authors,
+                c.source,
+                c.year_from, 
+                c.year_to, 
+                c.license, 
+                c.license_version, 
+                c.license_extras, 
+                c.author_comments, 
+                c.changes, 
+                c.default_language, 
+                c.a11y_title, 
+                l.name 
+                FROM wp_h5p_contents AS c
+                JOIN wp_h5p_libraries AS l
+                ON c.library_id = l.id
+                WHERE c.id = ?`,
+        [contentIdNumber]
+      );
+      log("Got content info.");
+      if (!cRows[0]) {
+        throw new Error("No content with this contentId!");
+      }
+
+      const [lRows] = (await connection.query(
+        `SELECT l.name,
+                l.major_version,
+                l.minor_version,
+                cl.dependency_type
+                FROM wp_h5p_libraries AS l
+                JOIN wp_h5p_contents_libraries AS cl
+                ON l.id = cl.library_id
+                WHERE cl.content_id = ?`,
+        [contentIdNumber]
+      )) as RowDataPacket[][];
+
+      return {
+        a11yTitle: cRows[0].a11y_title,
+        authorComments: cRows[0].author_comments,
+        authors: JSON.parse(cRows[0].authors),
+        changes: JSON.parse(cRows[0].changes),
+        contentType: cRows[0].content_type,
+        defaultLanguage: cRows[0].default_language,
+        editorDependencies: lRows
+          .filter((d) => d.dependency_type === "editor")
+          .map((d) => ({
+            machineName: d.name,
+            majorVersion: d.major_version,
+            minorVersion: d.minor_version,
+          })),
+        embedTypes: [cRows[0].embed_type],
+        language: cRows[0].default_language,
+        license: cRows[0].license,
+        licenseExtras: cRows[0].license_extras,
+        licenseVersion: cRows[0].license_version,
+        mainLibrary: cRows[0].name,
+        preloadedDependencies: lRows
+          .filter((d) => d.dependency_type === "preloaded")
+          .map((d) => ({
+            machineName: d.name,
+            majorVersion: d.major_version,
+            minorVersion: d.minor_version,
+          })),
+        source: cRows[0].source,
+        title: cRows[0].title,
+        yearFrom: cRows[0].year_from,
+        yearTo: cRows[0].year_to,
+      };
+    } catch (error) {
+      log("Error while getting user information from database: %s", error);
+      throw error;
+    }
+  }
+  public async getContentParameters(
+    contentId: ContentId,
+    user: IUser
+  ): Promise<ContentParameters> {}
 }

@@ -54,7 +54,7 @@ const start = async (): Promise<void> => {
   // Add shared state websocket and ShareDB to the server
   sharedStateServer = new SharedStateServer(
     server,
-    () => {},
+    (library) => { fetch()},
     () => {},
     async (req: express.Request) => {
       // We get the raw request that was upgraded to the websocket from

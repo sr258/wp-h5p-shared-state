@@ -32,6 +32,7 @@
     "dotenv": "^14.2.0",
     "express": "^4.17.2",
     "mysql2": "^2.3.3",
+    "node-fetch": "^3.2.0",
     "wp-auth": "^1.0.6"
   },
   "devDependencies": {
