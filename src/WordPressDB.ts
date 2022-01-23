@@ -224,12 +224,44 @@ export default class WordPressDB {
         yearTo: cRows[0].year_to,
       };
     } catch (error) {
-      log("Error while getting user information from database: %s", error);
+      log("Error while getting content metadata from database: %s", error);
       throw error;
     }
   }
   public async getContentParameters(
-    contentId: ContentId,
-    user: IUser
-  ): Promise<ContentParameters> {}
+    contentId: ContentId
+  ): Promise<ContentParameters> {
+    let connection: mysql.Connection;
+    try {
+      connection = await mysql.createConnection({
+        host: this.dbHost,
+        user: this.dbUser,
+        password: this.dbPassword,
+        database: this.dbDatabase,
+      });
+    } catch (error) {
+      console.error("Error while connecting to database: ", error);
+      throw error;
+    }
+
+    const contentIdNumber = Number.parseInt(contentId);
+
+    try {
+      const [cRows] = await connection.query(
+        `SELECT parameters
+                FROM wp_h5p_contents
+                WHERE id = ?`,
+        [contentIdNumber]
+      );
+      log("Got content parameters.");
+      if (!cRows[0]) {
+        throw new Error("No content with this contentId!");
+      }
+
+      return JSON.parse(cRows[0].parameters);
+    } catch (error) {
+      log("Error while getting parameters from database: %s", error);
+      throw error;
+    }
+  }
 }

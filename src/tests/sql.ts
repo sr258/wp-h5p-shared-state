@@ -14,9 +14,21 @@ const test1 = async () => {
   console.log(metadata);
 };
 
+const test2 = async () => {
+  const db = new WordPressDB(
+    settings.dbHost,
+    settings.dbUser,
+    settings.dbPassword,
+    settings.dbName
+  );
+  const params = await db.getContentParameters("3");
+  console.log(params);
+};
+
 const start = async () => {
   settings = Settings.load();
   await test1();
+  await test2();
   process.exit(0);
 };
 
