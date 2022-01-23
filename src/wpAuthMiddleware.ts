@@ -76,22 +76,12 @@ export default (
             return fail();
           }
 
-          req.user = { ...data, id: userId };
-          for (const role in roles) {
-            if (roles[role] !== true) {
-              continue;
-            }
-            if (db.hasCapability(role, "edit_posts")) {
-              req.user.permission = "privileged";
-            }
-          }
-          if (!req.user?.permission) {
-            req.user.permission = "user";
-          }
-          log(
-            "User is logged in with permission level %s",
-            req.user.permission
-          );
+          req.user = {
+            ...data,
+            id: userId,
+            roles: Object.keys(roles),
+            permissions: await db.getCapabilities(Object.keys(roles)),
+          };
           next();
         } else {
           log("User is not logged in.");

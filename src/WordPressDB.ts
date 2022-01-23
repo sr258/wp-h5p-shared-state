@@ -41,18 +41,62 @@ export default class WordPressDB {
    * @param capability a WordPress capability
    * @returns true if the role has the capability
    */
-  public hasCapability(role: string, capability: string): boolean {
+  public hasCapability = async (
+    role: string,
+    capability: string
+  ): Promise<boolean> => {
     if (!this.initialized) {
-      this.init();
+      await this.init();
     }
     return this.capabilities[role]?.capabilities[capability] ?? false;
-  }
+  };
+
+  public getCapabilities = async (
+    role: string | string[]
+  ): Promise<string[]> => {
+    if (Array.isArray(role)) {
+      return Array.from(
+        new Set<string>(
+          (
+            await Promise.all(
+              role.map((role) => this.getCapabilitiesForSingleRole(role))
+            )
+          ).reduce((prev, curr) => {
+            return prev.concat(curr);
+          }, [])
+        )
+      );
+    } else {
+      return this.getCapabilitiesForSingleRole(role);
+    }
+  };
+
+  public getCapabilitiesForSingleRole = async (
+    role: string
+  ): Promise<string[]> => {
+    if (!this.initialized) {
+      await this.init();
+    }
+
+    const roleObject = this.capabilities[role];
+    if (!roleObject) {
+      return [];
+    }
+
+    const caps: string[] = [];
+    for (const cap in roleObject.capabilities) {
+      if (roleObject.capabilities[cap]) {
+        caps.push(cap);
+      }
+    }
+    return caps;
+  };
 
   /**
    * Loads capabilities from the WordPress database.
    * @throws an error if unable to connect to database
    */
-  async init() {
+  public init = async () => {
     log("Loading roles from WP database ...");
 
     const connection = await this.getConnection();
@@ -77,7 +121,7 @@ export default class WordPressDB {
     }
 
     this.initialized = true;
-  }
+  };
 
   /**
    * Gets information about a user from the database
@@ -85,11 +129,11 @@ export default class WordPressDB {
    * @returns information about the user or undefined if it did not exist
    * @throws an error if the database is unavailable
    */
-  async getUserData(
+  public getUserData = async (
     id: string
   ): Promise<
     { username: string; displayName: string; email: string } | undefined
-  > {
+  > => {
     log("Getting user information for id %d from WP database...", id);
 
     const connection = await this.getConnection();
@@ -110,11 +154,11 @@ export default class WordPressDB {
       log("Error while getting user information from database: %s", error);
       return undefined;
     }
-  }
+  };
 
-  public async getContentMetadata(
+  public getContentMetadata = async (
     contentId: ContentId
-  ): Promise<IContentMetadata> {
+  ): Promise<IContentMetadata> => {
     const connection = await this.getConnection();
 
     const contentIdNumber = Number.parseInt(contentId);
@@ -195,10 +239,10 @@ export default class WordPressDB {
       log("Error while getting content metadata from database: %s", error);
       throw error;
     }
-  }
-  public async getContentParameters(
+  };
+  public getContentParameters = async (
     contentId: ContentId
-  ): Promise<ContentParameters> {
+  ): Promise<ContentParameters> => {
     const connection = await this.getConnection();
 
     const contentIdNumber = Number.parseInt(contentId);
@@ -220,9 +264,9 @@ export default class WordPressDB {
       log("Error while getting parameters from database: %s", error);
       throw error;
     }
-  }
+  };
 
-  private async getConnection(): Promise<mysql.Connection> {
+  private getConnection = async (): Promise<mysql.Connection> => {
     let connection: mysql.Connection;
     try {
       connection = await mysql.createConnection({
@@ -236,5 +280,5 @@ export default class WordPressDB {
       throw error;
     }
     return connection;
-  }
+  };
 }
