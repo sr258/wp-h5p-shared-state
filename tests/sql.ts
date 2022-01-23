@@ -1,9 +1,9 @@
-import Settings from "../Settings";
-import WordPressDB from "../WordPressDB";
+import Settings from "../src/Settings";
+import WordPressDB from "../src/WordPressDB";
 
 let settings: Settings;
 
-const test1 = async () => {
+const getContentMetadata = async () => {
   const db = new WordPressDB(
     settings.dbHost,
     settings.dbUser,
@@ -14,7 +14,7 @@ const test1 = async () => {
   console.log(metadata);
 };
 
-const test2 = async () => {
+const getContentParameters = async () => {
   const db = new WordPressDB(
     settings.dbHost,
     settings.dbUser,
@@ -27,8 +27,8 @@ const test2 = async () => {
 
 const start = async () => {
   settings = Settings.load();
-  await test1();
-  await test2();
+  await getContentMetadata();
+  await getContentParameters();
   process.exit(0);
 };
 
