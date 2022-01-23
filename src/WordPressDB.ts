@@ -55,18 +55,7 @@ export default class WordPressDB {
   async init() {
     log("Loading roles from WP database ...");
 
-    let connection: mysql.Connection;
-    try {
-      connection = await mysql.createConnection({
-        host: this.dbHost,
-        user: this.dbUser,
-        password: this.dbPassword,
-        database: this.dbDatabase,
-      });
-    } catch (error) {
-      console.error("Error while connecting to database: ", error);
-      throw error;
-    }
+    const connection = await this.getConnection();
 
     let res;
     try {
@@ -102,18 +91,8 @@ export default class WordPressDB {
     { username: string; displayName: string; email: string } | undefined
   > {
     log("Getting user information for id %d from WP database...", id);
-    let connection: mysql.Connection;
-    try {
-      connection = await mysql.createConnection({
-        host: this.dbHost,
-        user: this.dbUser,
-        password: this.dbPassword,
-        database: this.dbDatabase,
-      });
-    } catch (error) {
-      console.error("Error while connecting to database: ", error);
-      throw error;
-    }
+
+    const connection = await this.getConnection();
 
     try {
       const res = await connection.query(
@@ -136,18 +115,7 @@ export default class WordPressDB {
   public async getContentMetadata(
     contentId: ContentId
   ): Promise<IContentMetadata> {
-    let connection: mysql.Connection;
-    try {
-      connection = await mysql.createConnection({
-        host: this.dbHost,
-        user: this.dbUser,
-        password: this.dbPassword,
-        database: this.dbDatabase,
-      });
-    } catch (error) {
-      console.error("Error while connecting to database: ", error);
-      throw error;
-    }
+    const connection = await this.getConnection();
 
     const contentIdNumber = Number.parseInt(contentId);
 
@@ -231,18 +199,7 @@ export default class WordPressDB {
   public async getContentParameters(
     contentId: ContentId
   ): Promise<ContentParameters> {
-    let connection: mysql.Connection;
-    try {
-      connection = await mysql.createConnection({
-        host: this.dbHost,
-        user: this.dbUser,
-        password: this.dbPassword,
-        database: this.dbDatabase,
-      });
-    } catch (error) {
-      console.error("Error while connecting to database: ", error);
-      throw error;
-    }
+    const connection = await this.getConnection();
 
     const contentIdNumber = Number.parseInt(contentId);
 
@@ -263,5 +220,21 @@ export default class WordPressDB {
       log("Error while getting parameters from database: %s", error);
       throw error;
     }
+  }
+
+  private async getConnection(): Promise<mysql.Connection> {
+    let connection: mysql.Connection;
+    try {
+      connection = await mysql.createConnection({
+        host: this.dbHost,
+        user: this.dbUser,
+        password: this.dbPassword,
+        database: this.dbDatabase,
+      });
+    } catch (error) {
+      console.error("Error while connecting to database: ", error);
+      throw error;
+    }
+    return connection;
   }
 }
