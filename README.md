@@ -3,6 +3,11 @@
 This is a microservice that runs alongside a WordPress installation and allows
 content type to have a shared state.
 
+## Requirements
+
+- NodeJS >= 16
+- NPM >= 7
+
 ## Installation
 
 - Configure you service with environment variables or .env (see example.env)
