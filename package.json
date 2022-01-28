@@ -28,6 +28,7 @@
     "@lumieducation/h5p-server": "^9.0.8",
     "@lumieducation/h5p-shared-state-server": "file:../../dev/lumi/h5p-nodejs-library/packages/h5p-shared-state-server",
     "body-parser": "^1.19.1",
+    "cors": "^2.8.5",
     "debug": "^4.3.3",
     "dotenv": "^14.2.0",
     "express": "^4.17.2",
@@ -36,6 +37,7 @@
     "wp-auth": "^1.0.6"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.12",
     "@types/debug": "^4.1.7",
     "@types/express": "^4.17.13",
     "@types/node": "^17.0.10",

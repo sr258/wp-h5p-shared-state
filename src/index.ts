@@ -4,6 +4,7 @@ import http from "http";
 import SharedStateServer from "@lumieducation/h5p-shared-state-server";
 import debug from "debug";
 import { promisify } from "util";
+import cors from "cors";
 
 import Settings from "./Settings";
 import WordPressDB from "./WordPressDB";
@@ -48,7 +49,11 @@ const start = async (): Promise<void> => {
     })
   );
 
-  const wpAuth = wpAuthMiddleware(settings, db);
+  app.use(cors({ origin: settings.wordpressUrl, credentials: true }));
+
+  const wpAuth = wpAuthMiddleware(settings, db, {
+    unauthenticatedBehavior: "next",
+  });
 
   const wpAuthPromised = promisify(
     wpAuthMiddleware(settings, db, { unauthenticatedBehavior: "next" })
@@ -65,6 +70,28 @@ const start = async (): Promise<void> => {
     )}`.replace("\n", "<br/>");
     res.send(output);
   });
+
+  /**
+   * The route returns information about the user. It is used by the client to
+   * find out who the user is and what privilege level he/she has. This
+   * information is not included in the WordPress H5P integration object.
+   */
+  app.get(
+    "/auth-data/:contentId",
+    (req: express.Request<{ contentId: string }>, res) => {
+      if (!req.user) {
+        res.status(200).json({ level: "anonymous" });
+      } else {
+        let level: string;
+        if (req.user.permissions.includes("edit_h5p_contents")) {
+          level = "privileged";
+        } else {
+          level = "user";
+        }
+        res.status(200).json({ level, userId: req.user.id?.toString() });
+      }
+    }
+  );
 
   // We need to create our own http server to pass it to the shared state
   // package.
@@ -94,7 +121,7 @@ const start = async (): Promise<void> => {
       }
     },
     async (user, contentId) => {
-      if ((user as any).permissions.includes("edit_h5p_contents")) {
+      if ((user as any)?.permissions?.includes("edit_h5p_contents")) {
         return "privileged";
       } else {
         return "user";

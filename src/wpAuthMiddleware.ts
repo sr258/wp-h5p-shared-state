@@ -28,8 +28,7 @@ export default (
     mysql_port: settings.dbPort,
     wp_table_prefix: settings.tablePrefix,
   });
-  log("WordPress authenticator initialized");
-
+  log("WordPress authenticator initialized");  
   return (req: express.Request, res: express.Response, next): void => {
     authenticator
       .checkAuth(req)
