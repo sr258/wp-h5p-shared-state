@@ -28,11 +28,14 @@ export default (
     mysql_port: settings.dbPort,
     wp_table_prefix: settings.tablePrefix,
   });
-  log("WordPress authenticator initialized");  
+  log("WordPress authenticator initialized");
+
   return (req: express.Request, res: express.Response, next): void => {
     authenticator
       .checkAuth(req)
       .on("auth", async (authIsValid: boolean, userId: string | undefined) => {
+        // When the middleware is created, you can decide how the middleware
+        // should behave when the user is not authenticated.
         const fail = () => {
           if (options?.unauthenticatedBehavior === "next") {
             log("User not authenticated. Calling next");
@@ -56,10 +59,13 @@ export default (
         if (authIsValid && userId) {
           const data = await db.getUserData(userId);
           if (!data) {
+            // This should normally not happen, but just to be sure ...
             log("User does not exist in user table.");
             return fail();
           }
 
+          // We inject the permission the user has into the user object, so we
+          // get his/her roles.
           let roles: { [role: string]: boolean };
           try {
             roles = await new Promise((resolve, reject) => {
@@ -71,6 +77,7 @@ export default (
               });
             });
           } catch (error) {
+            // Should normally not happen, just to be sure ...
             log("Error while getting user meta for user id %s", userId);
             return fail();
           }

@@ -5,7 +5,6 @@ import {
   ContentId,
   ContentParameters,
   IContentMetadata,
-  IUser,
 } from "@lumieducation/h5p-server";
 
 const log = debug("wp-microservice:db");
@@ -14,6 +13,12 @@ const log = debug("wp-microservice:db");
  * Queries the WordPress database
  */
 export default class WordPressDB {
+  /**
+   * @param dbHost the hostname of the MySQL / MariaDB database server
+   * @param dbUser the username of a user that can access the WordPress database
+   * @param dbPassword the password of a user that can access the WordPress database
+   * @param dbDatabase the database in which WordPress stores its data
+   */
   constructor(
     private dbHost: string,
     private dbUser: string,
@@ -22,7 +27,7 @@ export default class WordPressDB {
   ) {}
 
   /**
-   * Caches the capabilities
+   * Caches the capabilities. Used to determine access rights.
    */
   private capabilities: {
     [role: string]: {
@@ -33,6 +38,9 @@ export default class WordPressDB {
     };
   } = {};
 
+  /**
+   * Will be true once the capabilities / roles have been loaded.
+   */
   private initialized: boolean = false;
 
   /**
@@ -41,7 +49,7 @@ export default class WordPressDB {
    * @param capability a WordPress capability
    * @returns true if the role has the capability
    */
-  public hasCapability = async (
+  public roleHasCapability = async (
     role: string,
     capability: string
   ): Promise<boolean> => {
@@ -51,6 +59,11 @@ export default class WordPressDB {
     return this.capabilities[role]?.capabilities[capability] ?? false;
   };
 
+  /**
+   * Gets all capabilities of a role
+   * @param role one or several roles
+   * @returns a list of capability names a user with the role(s) has
+   */
   public getCapabilities = async (
     role: string | string[]
   ): Promise<string[]> => {
@@ -71,6 +84,9 @@ export default class WordPressDB {
     }
   };
 
+  /**
+   * Returns a list of capabilities a role has
+   */
   public getCapabilitiesForSingleRole = async (
     role: string
   ): Promise<string[]> => {
@@ -109,6 +125,8 @@ export default class WordPressDB {
     } catch (error) {
       log("Error while getting roles from database: %s", error);
       return undefined;
+    } finally {
+      await connection.end();
     }
 
     this.capabilities = serialize.unserialize(res[0][0].option_value);
@@ -130,11 +148,15 @@ export default class WordPressDB {
    * @throws an error if the database is unavailable
    */
   public getUserData = async (
-    id: string
+    id: string | number
   ): Promise<
     { username: string; displayName: string; email: string } | undefined
   > => {
     log("Getting user information for id %d from WP database...", id);
+
+    if (typeof id === "string") {
+      id = Number.parseInt(id);
+    }
 
     const connection = await this.getConnection();
 
@@ -153,9 +175,14 @@ export default class WordPressDB {
     } catch (error) {
       log("Error while getting user information from database: %s", error);
       return undefined;
+    } finally {
+      await connection.end();
     }
   };
 
+  /**
+   * Returns information about content
+   */
   public getContentMetadata = async (
     contentId: ContentId
   ): Promise<IContentMetadata> => {
@@ -238,8 +265,14 @@ export default class WordPressDB {
     } catch (error) {
       log("Error while getting content metadata from database: %s", error);
       throw error;
+    } finally {
+      await connection.end();
     }
   };
+
+  /**
+   * Returns the parameters (= the actual content data) for a content object.
+   */
   public getContentParameters = async (
     contentId: ContentId
   ): Promise<ContentParameters> => {
@@ -263,9 +296,16 @@ export default class WordPressDB {
     } catch (error) {
       log("Error while getting parameters from database: %s", error);
       throw error;
+    } finally {
+      await connection.end();
     }
   };
 
+  /**
+   * Returns a connection to the WordPress database. This connection must be
+   * manually ended after use.
+   * @returns 
+   */
   private getConnection = async (): Promise<mysql.Connection> => {
     let connection: mysql.Connection;
     try {

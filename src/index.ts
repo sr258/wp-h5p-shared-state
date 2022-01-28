@@ -13,12 +13,14 @@ import * as h5pRepository from "./h5pRepository";
 import User from "./User";
 
 const log = debug("wp-microservice");
+
 let db: WordPressDB;
 let settings: Settings;
 let sharedStateServer: SharedStateServer;
 
-const start = async (): Promise<void> => {
-  // Get settings (from environment variables)
+const main = async (): Promise<void> => {
+  // Get settings (from environment variables or .env file. See example.env what
+  // variables can and must be set)
   settings = Settings.load();
   log("Settings loaded");
 
@@ -29,17 +31,19 @@ const start = async (): Promise<void> => {
     settings.dbPassword,
     settings.dbName
   );
-  // Load roles from WordPress database to allow checks
+
+  // Load roles from WordPress database for later checks
   try {
     await db.init();
   } catch (error) {
     console.error(error);
-    // Terminate with non-zero error code
+    // Terminate with non-zero error code if the roles could not be loaded
+    // (usually a problem with the DB connection)
     process.exit(1);
   }
   log("Initialized database");
 
-  // We now set up the Express server in the usual fashion.
+  // Create express server
   const app = express();
 
   app.use(bodyParser.json({ limit: "500mb" }));
@@ -49,17 +53,26 @@ const start = async (): Promise<void> => {
     })
   );
 
+  // We need CORS for the HTTP XHR request sent to /auth-data/:contentId. We
+  // only allow requests originating from the WordPress site and also allow the
+  // cookie.
   app.use(cors({ origin: settings.wordpressUrl, credentials: true }));
 
+  // authenticate users with the WordPress session
   const wpAuth = wpAuthMiddleware(settings, db, {
     unauthenticatedBehavior: "next",
   });
+  app.use(wpAuth);
 
+  // For later use in callback
   const wpAuthPromised = promisify(
     wpAuthMiddleware(settings, db, { unauthenticatedBehavior: "next" })
   ).bind(wpAuth);
-  app.use(wpAuth);
 
+  /**
+   * This route returns human-readable information about the currently logged in
+   * user. Only for debugging purposes to test the authentication.
+   */
   app.get("/auth-test", (req, res) => {
     const output = `Hello ${
       req.user?.displayName ?? "not logged in user"
@@ -74,7 +87,8 @@ const start = async (): Promise<void> => {
   /**
    * The route returns information about the user. It is used by the client to
    * find out who the user is and what privilege level he/she has. This
-   * information is not included in the WordPress H5P integration object.
+   * information is not included in the WordPress H5P integration object and we
+   * avoid forking the H5P plugin by adding this route here.
    */
   app.get(
     "/auth-data/:contentId",
@@ -83,6 +97,9 @@ const start = async (): Promise<void> => {
         res.status(200).json({ level: "anonymous" });
       } else {
         let level: string;
+        // We currently give everyone who can edit H5Ps privileged permission.
+        // TODO: follow the pattern of the main H5P plugin and respect
+        // "edit_others_h5p_contents" and check the owner of the content
         if (req.user.permissions.includes("edit_h5p_contents")) {
           level = "privileged";
         } else {
@@ -103,9 +120,13 @@ const start = async (): Promise<void> => {
     h5pRepository.getLibraryMetadata(settings),
     h5pRepository.getLibraryFileAsJson(settings),
     async (req: express.Request) => {
+      // This function is called when a user connects to the websocket. The
+      // Express middleware above isn't applied for websockets, so we have to
+      // call the authentication middleware ourselves.
       await wpAuthPromised(req, null as any);
       if (!req.user || !req.user.id) {
         console.log("Unauthenticated user tried to access websocket.");
+        // TODO: improve and assign own session
         return new User("anonymous", "anonymous", "", "anonymous");
       } else {
         return {
@@ -121,6 +142,8 @@ const start = async (): Promise<void> => {
       }
     },
     async (user, contentId) => {
+      // Determine the permission level for the specific content type that the
+      // user wants to access
       if ((user as any)?.permissions?.includes("edit_h5p_contents")) {
         return "privileged";
       } else {
@@ -137,7 +160,6 @@ const start = async (): Promise<void> => {
   });
 };
 
-// We can't use await outside a an async function, so we use the start()
+// We can't use await outside a an async function, so we use the main()
 // function as a workaround.
-
-start();
+main();

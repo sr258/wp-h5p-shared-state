@@ -1,10 +1,12 @@
-// This load the .env file
+// This load the contents of the .env file to the process.XXX
 import "dotenv/config";
-import { runInThisContext } from "vm";
 
 /**
  * Central repository for global settings. Initialize with the load() factory
  * method.
+ *
+ * The repository loads the settings from environment variables or from a .env
+ * file. See `example.env` for the values you can set.
  */
 export default class Settings {
   private constructor() {}
@@ -29,13 +31,18 @@ export default class Settings {
   public static load(): Settings {
     const settings = new Settings();
     if (settings.checkEnvVars()) {
-      console.error("The service cannot be started.");
-      process.exit();
+      console.error(
+        "The H5P shared state microservice cannot be started as the configuration is invalid."
+      );
+      process.exit(1);
     }
     settings.loadEnvVars();
     return settings;
   }
 
+  /**
+   * Loads the settings from the environment variables
+   */
   private loadEnvVars() {
     this.wordpressUrl = process.env.WORDPRESS_URL as string;
     if (this.wordpressUrl.endsWith("/")) {

@@ -1,7 +1,7 @@
 import type { IUser } from "@lumieducation/h5p-server";
 
 /**
- * Example user object
+ * User object as expected by H5P.
  */
 export default class User implements IUser {
   constructor(
