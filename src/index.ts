@@ -29,7 +29,8 @@ const main = async (): Promise<void> => {
     settings.dbHost,
     settings.dbUser,
     settings.dbPassword,
-    settings.dbName
+    settings.dbName,
+    settings.tablePrefix
   );
 
   // Load roles from WordPress database for later checks

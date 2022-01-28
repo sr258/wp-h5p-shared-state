@@ -18,12 +18,14 @@ export default class WordPressDB {
    * @param dbUser the username of a user that can access the WordPress database
    * @param dbPassword the password of a user that can access the WordPress database
    * @param dbDatabase the database in which WordPress stores its data
+   * @param prefix the WordPress prefix used in the database (normally wp_)
    */
   constructor(
     private dbHost: string,
     private dbUser: string,
     private dbPassword: string,
-    private dbDatabase: string
+    private dbDatabase: string,
+    private prefix: string
   ) {}
 
   /**
@@ -120,7 +122,7 @@ export default class WordPressDB {
     let res;
     try {
       res = await connection.query(
-        "SELECT option_value FROM wp_options WHERE `option_name` = 'wp_user_roles'"
+        `SELECT option_value FROM ${this.prefix}options WHERE option_name = '${this.prefix}user_roles'`
       );
     } catch (error) {
       log("Error while getting roles from database: %s", error);
@@ -162,7 +164,7 @@ export default class WordPressDB {
 
     try {
       const res = await connection.query(
-        "SELECT display_name, user_email, user_nicename FROM wp_users WHERE `ID` = ?",
+        `SELECT display_name, user_email, user_nicename FROM ${this.prefix}users WHERE ID = ?`,
         [id]
       );
       log("Got user information from db.");
@@ -207,8 +209,8 @@ export default class WordPressDB {
                 c.default_language, 
                 c.a11y_title, 
                 l.name 
-                FROM wp_h5p_contents AS c
-                JOIN wp_h5p_libraries AS l
+                FROM ${this.prefix}h5p_contents AS c
+                JOIN ${this.prefix}h5p_libraries AS l
                 ON c.library_id = l.id
                 WHERE c.id = ?`,
         [contentIdNumber]
@@ -223,8 +225,8 @@ export default class WordPressDB {
                 l.major_version,
                 l.minor_version,
                 cl.dependency_type
-                FROM wp_h5p_libraries AS l
-                JOIN wp_h5p_contents_libraries AS cl
+                FROM ${this.prefix}h5p_libraries AS l
+                JOIN ${this.prefix}h5p_contents_libraries AS cl
                 ON l.id = cl.library_id
                 WHERE cl.content_id = ?`,
         [contentIdNumber]
@@ -283,7 +285,7 @@ export default class WordPressDB {
     try {
       const [cRows] = await connection.query(
         `SELECT parameters
-                FROM wp_h5p_contents
+                FROM ${this.prefix}h5p_contents
                 WHERE id = ?`,
         [contentIdNumber]
       );
@@ -304,7 +306,7 @@ export default class WordPressDB {
   /**
    * Returns a connection to the WordPress database. This connection must be
    * manually ended after use.
-   * @returns 
+   * @returns
    */
   private getConnection = async (): Promise<mysql.Connection> => {
     let connection: mysql.Connection;
