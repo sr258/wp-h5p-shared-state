@@ -1,7 +1,7 @@
 {
   "name": "wp-h5p-shared-state",
   "version": "0.1.0",
-  "description": "A companion microservice to WordPress that offers a shared state service for H5P",
+  "description": "A companion microservice to WordPress that provides a shared state service for H5P",
   "main": "build/index.js",
   "scripts": {
     "build": "npx tsc -P ./tsconfig.json",
@@ -26,7 +26,7 @@
   "homepage": "https://github.com/sr258/wp-h5p-shared-state#readme",
   "dependencies": {
     "@lumieducation/h5p-server": "^9.0.8",
-    "@lumieducation/h5p-shared-state-server": "file:../../dev/lumi/h5p-nodejs-library/packages/h5p-shared-state-server",
+    "@lumieducation/h5p-shared-state-server": "file:../lumi/h5p-nodejs-library/packages/h5p-shared-state-server",
     "body-parser": "^1.19.1",
     "cors": "^2.8.5",
     "debug": "^4.3.3",
