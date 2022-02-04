@@ -16,7 +16,7 @@ export const getLibraryMetadata =
   async (library: ILibraryName): Promise<ILibraryMetadata> => {
     const ubername = LibraryName.toUberName(library);
     const result = await fetch(
-      settings.wordpressUrl +
+      settings.wordpressUrlFetch +
         "/wp-content/uploads/h5p/libraries/" +
         ubername +
         "/library.json"
@@ -36,7 +36,7 @@ export const getLibraryFileAsJson =
   async (libraryName: ILibraryName, filename: string): Promise<any> => {
     const ubername = LibraryName.toUberName(libraryName);
     const result = await fetch(
-      settings.wordpressUrl +
+      settings.wordpressUrlFetch +
         "/wp-content/uploads/h5p/libraries/" +
         ubername +
         "/" +

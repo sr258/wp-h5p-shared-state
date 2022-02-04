@@ -41,6 +41,9 @@ services:
     restart: always
     environment:
       WORDPRESS_URL: http://localhost
+      # The fetch URL is used for direct access from the microservice to WordPress
+      # It can't be localhost, as this is the service host's localhost
+      WORDPRESS_URL_FETCH: http://wordpress
       MICROSERVICE_URL: http://localhost/h5p-shared-state
       WORDPRESS_LOGGED_IN_KEY: d86935b67dd417fa2347bfa7972763be3c1a845d
       WORDPRESS_LOGGED_IN_SALT: 80564189220e440ff813ca05883cb8f220881034

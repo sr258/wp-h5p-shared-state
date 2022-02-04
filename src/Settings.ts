@@ -12,6 +12,7 @@ export default class Settings {
   private constructor() {}
 
   public wordpressUrl: string = "";
+  public wordpressUrlFetch: string = "";
   public microserviceUrl: string = "";
   public loggedInKey: string = "";
   public loggedInSalt: string = "";
@@ -49,6 +50,16 @@ export default class Settings {
       this.wordpressUrl = this.wordpressUrl.substring(
         0,
         this.wordpressUrl.lastIndexOf("/")
+      );
+    }
+    this.wordpressUrlFetch = process.env.WORDPRESS_URL_FETCH as string;
+    if (!this.wordpressUrlFetch) {
+      this.wordpressUrlFetch = this.wordpressUrl;
+    }
+    if (this.wordpressUrlFetch.endsWith("/")) {
+      this.wordpressUrlFetch = this.wordpressUrlFetch.substring(
+        0,
+        this.wordpressUrlFetch.lastIndexOf("/")
       );
     }
     this.microserviceUrl = process.env.MICROSERVICE_URL as string;
