@@ -21,16 +21,55 @@ services:
     volumes:
       - wordpress_data:/var/www/html
       - ./config/wp-config.php:/var/www/html/wp-config.php
-    ports:
-      - "7000:80"
     restart: always
     environment:
       WORDPRESS_DB_HOST: db
       WORDPRESS_DB_USER: wordpress
       WORDPRESS_DB_PASSWORD: wordpress
-      WORDPRESS_DB_NAME: wordpress    
+      WORDPRESS_DB_NAME: wordpress
       WORDPRESS_LOGGED_IN_KEY: d86935b67dd417fa2347bfa7972763be3c1a845d
       WORDPRESS_LOGGED_IN_SALT: 80564189220e440ff813ca05883cb8f220881034
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.wordpress.rule=Host(`localhost`)"
+      - "traefik.http.routers.wordpress.entrypoints=web"
+
+  h5p-microservice:
+    image: wp-h5p-shared-state:test1
+    depends_on:
+      - db
+    restart: always
+    environment:
+      WORDPRESS_URL: http://localhost
+      MICROSERVICE_URL: http://localhost/h5p-shared-state
+      WORDPRESS_LOGGED_IN_KEY: d86935b67dd417fa2347bfa7972763be3c1a845d
+      WORDPRESS_LOGGED_IN_SALT: 80564189220e440ff813ca05883cb8f220881034
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress
+      PORT: 80
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.h5p.rule=Host(`localhost`) && PathPrefix(`/h5p-shared-state`)"
+      - "traefik.http.routers.h5p.entrypoints=web"
+      - "traefik.http.middlewares.h5p.stripprefix.prefixes=/h5p-shared-state"
+      - "traefik.http.routers.h5p.middlewares=h5p"
+
+  traefik:
+    image: "traefik:v2.6"
+    container_name: "traefik"
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
 volumes:
   db_data: {}
   wordpress_data: {}

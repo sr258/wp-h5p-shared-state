@@ -5,6 +5,7 @@ import SharedStateServer from "@lumieducation/h5p-shared-state-server";
 import debug from "debug";
 import { promisify } from "util";
 import cors from "cors";
+import morgan from "morgan";
 
 import Settings from "./Settings";
 import WordPressDB from "./WordPressDB";
@@ -46,6 +47,8 @@ const main = async (): Promise<void> => {
 
   // Create express server
   const app = express();
+
+  app.use(morgan("dev"));
 
   app.use(bodyParser.json({ limit: "500mb" }));
   app.use(

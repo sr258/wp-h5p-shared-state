@@ -136,8 +136,8 @@ require_once ABSPATH . 'wp-settings.php';
 /* Custom H5P Microservice configuration */
 define('H5P_LIBRARY_CONFIG', array(
       "H5P.ShareDBTest" => array(
-              "serverUrl" => "ws://localhost:3000/shared-state",
-              "auth" => "http://localhost:3000/auth-data")
+              "serverUrl" => "ws://localhost/h5p-shared-state/shared-state",
+              "auth" => "http://localhost/h5p-shared-state/auth-data")
           ));
 define('H5P_DEV', true);
 define('H5P_DISABLE_AGGREGATION', true);
