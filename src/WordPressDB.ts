@@ -25,7 +25,7 @@ export default class WordPressDB {
     private dbUser: string,
     private dbPassword: string,
     private dbDatabase: string,
-    private prefix: string
+    private prefix: string = "wp_"
   ) {}
 
   /**
