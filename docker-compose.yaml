@@ -29,13 +29,15 @@ services:
       WORDPRESS_DB_NAME: wordpress
       WORDPRESS_LOGGED_IN_KEY: d86935b67dd417fa2347bfa7972763be3c1a845d
       WORDPRESS_LOGGED_IN_SALT: 80564189220e440ff813ca05883cb8f220881034
+      WORDPRESS_H5P_MICROSERVICE_WS: ws://localhost/h5p-shared-state/shared-state
+      WORDPRESS_H5P_MICROSERVICE_AUTH: http://localhost/h5p-shared-state/auth-data
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.wordpress.rule=Host(`localhost`)"
       - "traefik.http.routers.wordpress.entrypoints=web"
 
   h5p-microservice:
-    image: wp-h5p-shared-state:test1
+    image: sr258/wp-h5p-shared-state:test1
     depends_on:
       - db
     restart: always
@@ -53,7 +55,7 @@ services:
       WORDPRESS_DB_NAME: wordpress
       PORT: 80
     labels:
-      - "traefik.enable=true"
+      - "traefik.enable=true"      
       - "traefik.http.routers.h5p.rule=Host(`localhost`) && PathPrefix(`/h5p-shared-state`)"
       - "traefik.http.routers.h5p.entrypoints=web"
       - "traefik.http.middlewares.h5p.stripprefix.prefixes=/h5p-shared-state"

@@ -136,8 +136,8 @@ require_once ABSPATH . 'wp-settings.php';
 /* Custom H5P Microservice configuration */
 define('H5P_LIBRARY_CONFIG', array(
       "H5P.ShareDBTest" => array(
-              "serverUrl" => "ws://localhost/h5p-shared-state/shared-state",
-              "auth" => "http://localhost/h5p-shared-state/auth-data")
-          ));
-define('H5P_DEV', true);
-define('H5P_DISABLE_AGGREGATION', true);
+              "serverUrl" => getenv_docker('WORDPRESS_H5P_MICROSERVICE_WS', ''),
+              "auth" => getenv_docker('WORDPRESS_H5P_MICROSERVICE_AUTH', '')
+          )));
+define('H5P_DEV', getenv_docker('WORDPRESS_H5P_DEV', false));
+define('H5P_DISABLE_AGGREGATION', getenv_docker('WORDPRESS_H5P_DISABLE_AGGREGATION', false));
