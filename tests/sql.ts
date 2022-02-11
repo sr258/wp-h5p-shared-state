@@ -1,6 +1,8 @@
 import Settings from "../src/Settings";
 import WordPressDB from "../src/WordPressDB";
 
+// Not a proper unit test, but a test that must be called manually.
+
 let settings: Settings;
 
 const getContentMetadata = async () => {
