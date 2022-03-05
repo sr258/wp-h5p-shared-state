@@ -37,7 +37,7 @@ services:
       - "traefik.http.routers.wordpress.entrypoints=web"
 
   h5p-microservice:
-    image: sr258/wp-h5p-shared-state:test1
+    image: sr258/wp-h5p-shared-state:main
     depends_on:
       - db
     restart: always
