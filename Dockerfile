@@ -7,16 +7,16 @@ WORKDIR /app
 COPY . /app/
 
 # install 
-# RUN npm install
+RUN npm ci
 
 # build
 RUN npm run build
 
 # remove development dependencies
-# RUN npm prune --production
+RUN npm prune --production
 
 # run clean-modules
-# RUN clean-modules --exclude "**/@lumieducation/**" --yes
+RUN clean-modules --exclude "**/@lumieducation/**" --yes
 
 FROM node:16-alpine
 
