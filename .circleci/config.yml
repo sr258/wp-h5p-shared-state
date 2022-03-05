@@ -1,5 +1,6 @@
 version: 2.1
 commands:
+  # Set up qemu for multi-arch build
   setup:
     steps:
       - run:
