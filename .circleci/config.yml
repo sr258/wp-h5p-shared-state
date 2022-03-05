@@ -22,6 +22,14 @@ commands:
             docker buildx use arm-builder
             docker buildx inspect --bootstrap
 jobs:
+  test:
+   machine:
+      image: ubuntu-2004:current
+   steps:
+     - checkout
+     - run: npm ci
+     - run: npm run build
+
  build:
    machine:
       image: ubuntu-2004:current
