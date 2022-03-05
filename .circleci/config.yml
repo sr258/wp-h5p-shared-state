@@ -13,7 +13,7 @@ commands:
           name: Check versions
           command: |
             qemu-aarch64-static --version
-            update-binfmts --version 
+            update-binfmts --version
       - run:
           name: Create builder
           command: |
@@ -23,22 +23,28 @@ commands:
             docker buildx inspect --bootstrap
 jobs:
   test:
-   machine:
+    machine:
       image: ubuntu-2004:current
-   steps:
-     - checkout
-     - run: npm ci
-     - run: npm run build
-
- build:
-   machine:
+    steps:
+      - checkout
+      - run: npm ci
+      - run: npm run build
+  build:
+    machine:
       image: ubuntu-2004:current
-   steps:
-     - checkout
-     - setup
-     # start proprietary DB using private Docker image with credentials stored
-     # in the UI
-     - run: echo "$DOCKER_PASS" | docker login --username $DOCKER_USER --password-stdin
-
-     # build the application image
-     - run: DOCKER_CLI_EXPERIMENTAL=enabled docker buildx build --platform linux/arm64,linux/amd64 --push -t sr258/wp-h5p-shared-state:$CIRCLE_BRANCH .
+    steps:
+      - checkout
+      - setup
+      # start proprietary DB using private Docker image with credentials stored
+      # in the UI
+      - run: echo "$DOCKER_PASS" | docker login --username $DOCKER_USER --password-stdin
+      # build the application image
+      - run: DOCKER_CLI_EXPERIMENTAL=enabled docker buildx build --platform linux/arm64,linux/amd64 --push -t sr258/wp-h5p-shared-state:$CIRCLE_BRANCH .
+workflows:
+  version: 2
+  test-build:
+    jobs:
+      - test
+      - build:
+          requires:
+            - test
