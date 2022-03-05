@@ -1,16 +1,35 @@
-version: 2
+version: 2.1
+commands:
+  setup:
+    steps:
+      - run:
+          name: Setup buildx and qemu
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y qemu-user-static
+            sudo apt-get install -y binfmt-support
+      - run:
+          name: Check versions
+          command: |
+            qemu-aarch64-static --version
+            update-binfmts --version 
+      - run:
+          name: Create builder
+          command: |
+            export DOCKER_CLI_EXPERIMENTAL=enabled
+            docker buildx create --name arm-builder
+            docker buildx use arm-builder
+            docker buildx inspect --bootstrap
 jobs:
  build:
    machine:
       image: ubuntu-2004:current
    steps:
      - checkout
+     - setup
      # start proprietary DB using private Docker image with credentials stored
      # in the UI
      - run: echo "$DOCKER_PASS" | docker login --username $DOCKER_USER --password-stdin
 
      # build the application image
-     - run: docker build -t sr258/wp-h5p-shared-state:$CIRCLE_BRANCH .
-
-     # deploy the image
-     - run: docker push sr258/wp-h5p-shared-state:$CIRCLE_BRANCH
+     - run: DOCKER_CLI_EXPERIMENTAL=enabled docker buildx build --platform linux/arm64,linux/amd64 --push -t sr258/wp-h5p-shared-state:$CIRCLE_BRANCH .
